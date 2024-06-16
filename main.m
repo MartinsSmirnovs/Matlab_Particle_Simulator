@@ -3,7 +3,7 @@ clc, clear, addpath( pwd )
 params = SimulationParams;
 params.electronCount = 50;
 params.copperCount = 30;
-params.Fx = 1e-27;
+params.Fx = 1e-26;
 params.Fy = 0;
 params.tickSeconds = 0.001;
 params.maxCopperSpeed = 500;
