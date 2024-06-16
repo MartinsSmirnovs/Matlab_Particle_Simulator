@@ -8,6 +8,7 @@ end
 
 properties ( Constant )
     m = 9.1093837e-31; % kg
+    q = -1.602e-19; % Charge of an electron
 end
 
 methods

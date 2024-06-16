@@ -2,7 +2,8 @@ classdef GodOfElectricity < handle
 
 properties( Access = public )
     electrons = Electron.empty
-    coppers = Copper.empty
+    passedElectrons = Electron.empty % Electrons that moved past y limit
+    coppers = Copper.empty    
 end
 
 properties( Access = private )
@@ -11,6 +12,9 @@ properties( Access = private )
     interactionRadius
     particles = Particle.empty
     tickSeconds
+    passedElectronsCounter
+    timeCounter % in seconds
+    I % current
 end
 
 methods
@@ -21,6 +25,9 @@ methods
         obj.yLimits = params.yLimits;
         obj.interactionRadius = params.interactionRadius;
         obj.tickSeconds = params.tickSeconds;
+        obj.passedElectronsCounter = 0;
+        obj.timeCounter = Counter( 1 );
+        obj.I = 0;
 
         % Spawn particles randomly
         obj.electrons = spawnInitialElectrons( params.electronCount, obj.xLimits.max, obj.yLimits.max );
@@ -33,11 +40,38 @@ methods
         obj.coppers = obj.moveCoppers( obj.tickSeconds );
         obj.particles = [ obj.electrons obj.coppers ];
         collide( obj.particles, obj.interactionRadius );
+        obj.countElectrons();
+    end
+
+    function passedElectrons = getPassedElectrons( obj )
+        passedElectrons = obj.passedElectrons;
+    end
+
+    function I = getI( obj )
+        I = obj.I;
+    end
+
+    function U = getU( obj )
+        U = ( sqrt( obj.Fx^2 + obj.Fy^2 ) * ( obj.xLimits.max - obj.xLimits.min ) ) / Electron.q;
     end
 end
 
 methods ( Access = private )
+    function countElectrons( obj )
+        obj.passedElectronsCounter = obj.passedElectronsCounter + length( obj.passedElectrons );
+        if( obj.timeCounter.targetReached( obj.tickSeconds ) )
+            % I = q/dt; q = n_of_electrons*q_of_electron; dt = 1;
+            % Since the amount of electrons in a simulation is severely
+            % limited, it makes sense to boost the number up by some big
+            % coefficient k
+            k = 10e16;
+            obj.I = obj.passedElectronsCounter * Electron.q * k;
+            obj.passedElectronsCounter = 0;
+        end
+    end
+
     function movedElectrons = moveElectrons( obj, s )
+        obj.passedElectrons = [];
         movedElectrons = [];
         for i = 1:length( obj.electrons )
             obj.electrons( i ).setAcceleration( obj.Fx, obj.Fy );
@@ -47,7 +81,13 @@ methods ( Access = private )
             bounceFromYLimit( obj.electrons( i ), obj.yLimits.min, obj.yLimits.max );
             
             % Keep only those electrons that are in valid x coordinates
-            movedElectrons = [ movedElectrons, nextElectron( obj.electrons( i ), obj.xLimits.max, obj.yLimits.max ) ];
+            electron = nextElectron( obj.electrons( i ), obj.xLimits.max, obj.yLimits.max );
+            movedElectrons = [ movedElectrons, electron ];
+    	    
+            % If new electron was spawned store the old one
+            if( obj.electrons( i ) ~= electron )
+                obj.passedElectrons = [ obj.passedElectrons, electron ];
+            end
         end
     end
 
