@@ -10,7 +10,6 @@ properties( Access = private )
     Fx, Fy % electric field force
     xLimits, yLimits % borders
     interactionRadius
-    particles = Particle.empty
     tickSeconds
     passedElectronsCounter
     timeCounter % in seconds
@@ -32,19 +31,13 @@ methods
         % Spawn particles randomly
         obj.electrons = spawnInitialElectrons( params.electronCount, obj.xLimits.max, obj.yLimits.max );
         obj.coppers = spawnCoppers( params.copperCount, obj.xLimits.max, obj.yLimits.max, params.maxCopperSpeed, params.vibrationRadius );
-        obj.particles = [ obj.electrons obj.coppers ];
     end
 
     function obj = tick( obj )
         obj.electrons = obj.moveElectrons( obj.tickSeconds );
         obj.coppers = obj.moveCoppers( obj.tickSeconds );
-        obj.particles = [ obj.electrons obj.coppers ];
-        collide( obj.particles, obj.interactionRadius );
+        collide( [ obj.electrons obj.coppers ], obj.interactionRadius );
         obj.countElectrons();
-    end
-
-    function passedElectrons = getPassedElectrons( obj )
-        passedElectrons = obj.passedElectrons;
     end
 
     function I = getI( obj )
@@ -64,7 +57,7 @@ methods ( Access = private )
             % Since the amount of electrons in a simulation is severely
             % limited, it makes sense to boost the number up by some big
             % coefficient k
-            k = 10e16;
+            k = 10e10;
             obj.I = obj.passedElectronsCounter * Electron.q * k;
             obj.passedElectronsCounter = 0;
         end
