@@ -5,10 +5,10 @@ params.electronCount = 60;
 params.copperCount = 30;
 params.Fx = 1e-26;
 params.Fy = 0;
-params.tickSeconds = 0.0001;
-params.currentCountInterval = 0.01;
+params.tickSeconds = 0.001;
+params.currentCountInterval = 0.1;
 params.maxCopperSpeed = 500;
-params.chargeForceInteractionEnabled = true;
+params.chargeForceInteractionEnabled = false;
 % Important!
 % Since the representation of particles are graph circles, they do not
 % change their dimensions relative to graph size. It means that 
