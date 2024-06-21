@@ -9,6 +9,8 @@ classdef SimulationParams
         interactionRadius % radius of particles where interaction between happens
         vibrationRadius % how far can copper particles vibrate
         tickSeconds % the time step
+        currentCountInterval % time interval after which calculate current from counted electrons
         maxCopperSpeed % max speed of copper particles m/s (for both x and y components)
+        chargeForceInteractionEnabled % enable/disable attraction force between charged particles
     end
 end
