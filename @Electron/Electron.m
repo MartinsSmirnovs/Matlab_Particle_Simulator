@@ -47,7 +47,7 @@ methods
             obj.vx = tmpX;
             obj.vy = tmpY;
         else
-            disp( 'Terminal velocity reached!' )
+            % disp( 'Terminal velocity reached!' )
         end
 
         obj.x = obj.x + obj.vx*s;

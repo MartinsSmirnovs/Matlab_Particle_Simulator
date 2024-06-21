@@ -14,6 +14,7 @@ properties( Access = private )
     passedElectronsCounter
     timeCounter % in seconds
     I % current
+    chargeForceInteractionEnabled
 end
 
 methods
@@ -25,8 +26,9 @@ methods
         obj.interactionRadius = params.interactionRadius;
         obj.tickSeconds = params.tickSeconds;
         obj.passedElectronsCounter = 0;
-        obj.timeCounter = Counter( 1 );
+        obj.timeCounter = Counter( params.currentCountInterval );
         obj.I = 0;
+        obj.chargeForceInteractionEnabled = params.chargeForceInteractionEnabled;
 
         % Spawn particles randomly
         obj.electrons = spawnInitialElectrons( params.electronCount, obj.xLimits.max, obj.yLimits.max );
@@ -34,6 +36,7 @@ methods
     end
 
     function obj = tick( obj )
+        obj.accelerate( obj.electrons );
         obj.electrons = obj.moveElectrons( obj.tickSeconds );
         obj.coppers = obj.moveCoppers( obj.tickSeconds );
         collide( [ obj.electrons obj.coppers ], obj.interactionRadius );
@@ -50,6 +53,17 @@ methods
 end
 
 methods ( Access = private )
+    function accelerate( obj, particles )
+        for particle = particles
+            if obj.chargeForceInteractionEnabled
+                [ Fxi, Fyi ] = interactiveForces( particle, particles );
+            else
+                Fxi = 0; Fyi = 0;
+            end
+            particle.setAcceleration( obj.Fx + Fxi, obj.Fy + Fyi );
+        end
+    end
+
     function countElectrons( obj )
         obj.passedElectronsCounter = obj.passedElectronsCounter + length( obj.passedElectrons );
         if( obj.timeCounter.targetReached( obj.tickSeconds ) )
@@ -67,7 +81,6 @@ methods ( Access = private )
         obj.passedElectrons = [];
         movedElectrons = [];
         for i = 1:length( obj.electrons )
-            obj.electrons( i ).setAcceleration( obj.Fx, obj.Fy );
             obj.electrons( i ).tick( s );
                         
             % Bounce electron that came to y limit
@@ -95,21 +108,21 @@ end
 end
 
 function electron = nextElectron( electron, xMax, yMax )
-    [ x, y ] = electron.getPosition();
+    [ x, ~ ] = electron.getPosition();
 
     if( x <= xMax && x >= 0 )
         % Keep current electron
         electron = electron;
     else
         % Spawn a new electron if current one is out of bounds
-        x = 0;
+        x = rand * xMax * 0.01;
         y = rand * yMax;
         electron = spawnElectron( x, y );
     end
 end
 
 function electron = spawnElectron( x, y )
-    vx = 30 * rand + 0.01;
+    vx = 40 * rand + 0.01;
     vy = 2*rand - 1;
     electron = Electron( x, y, vx, vy );
 end
@@ -146,5 +159,28 @@ function coppers = spawnCoppers( count, xMax, yMax, vMax, radius )
         x = rand * xMax;
         y = rand * yMax;
         coppers = [ coppers, Copper( x, y, vMax, radius ) ];
+    end
+end
+
+function [ Fx, Fy ] = interactiveForces( particle, particles )
+    Fx = 0; Fy = 0;
+    k = ( 4*pi*8.9e-12 )^-1;
+    for other = particles
+        if particle == other
+            continue
+        end
+
+        [ x1, y1 ] = particle.getPosition();
+        [ x2, y2 ] = other.getPosition();
+        
+        dx = x2 - x1;
+        dy = y2 - y1;
+
+        coulombsLaw = @( q1, q2, r ) k*q1*q2/(r^2);
+
+        attractionSign = sign( particle.q ) * sign( other.q );
+
+        Fx = Fx + coulombsLaw( particle.q, other.q, dx ) * -sign( dx ) * attractionSign;
+        Fy = Fy + coulombsLaw( particle.q, other.q, dy ) * -sign( dy ) * attractionSign;
     end
 end

@@ -1,12 +1,14 @@
 clc, clear, addpath( pwd )
 
 params = SimulationParams;
-params.electronCount = 50;
-params.copperCount = 60;
+params.electronCount = 60;
+params.copperCount = 30;
 params.Fx = 1e-26;
 params.Fy = 0;
-params.tickSeconds = 0.001;
+params.tickSeconds = 0.0001;
+params.currentCountInterval = 0.01;
 params.maxCopperSpeed = 500;
+params.chargeForceInteractionEnabled = true;
 % Important!
 % Since the representation of particles are graph circles, they do not
 % change their dimensions relative to graph size. It means that 
@@ -32,7 +34,7 @@ initialElectronPositions = getPositions( godOfElectricity.electrons );
 initialCopperPositions = getPositions( godOfElectricity.coppers );
 electronHandle = plot( initialElectronPositions( :, 1 ), initialElectronPositions( :, 2 ), 'o' );
 copperHandle = plot( initialCopperPositions( :, 1 ), initialCopperPositions( :, 2 ), 'o' );
-secondsCounter = Counter( 1 );
+secondsCounter = Counter( params.currentCountInterval );
 drawAnnotation( godOfElectricity );
 
 while 1
@@ -44,9 +46,7 @@ while 1
     set( electronHandle, 'YData', electronPositions( :, 2 ) )
     set( copperHandle, 'XData', copperPositions( :, 1 ) )
     set( copperHandle, 'YData', copperPositions( :, 2 ) )
-    
-    % It takes a full second of simulation to get to display current and
-    % resistance
+
     if( secondsCounter.targetReached( params.tickSeconds ) )
         drawAnnotation( godOfElectricity );
     end
